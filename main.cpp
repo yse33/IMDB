@@ -2,11 +2,34 @@
 
 using namespace std;
 
+const char* MOVIE_FILE_PATH = "movies.txt";
+const char* MOVIE_RATING_FILE_PATH = "ratings.txt";
+
+const size_t MAX_TITLE_LENGTH = 50;
+const size_t MAX_GENRE_LENGTH = 50;
+const size_t MAX_DIRECTOR_LENGTH = 50;
+const size_t MAX_ACTORS = 10;
+const size_t MAX_ACTORS_LENGTH = 50;
+const double DEFAULT_RATING = 5;
+
+struct Movie {
+    double rating = DEFAULT_RATING;
+    short id = 0;
+    short year{};
+    char title[MAX_TITLE_LENGTH]{};
+    char genre[MAX_GENRE_LENGTH]{};
+    char director[MAX_DIRECTOR_LENGTH]{};
+    char actors[MAX_ACTORS][MAX_ACTORS_LENGTH]{};
+};
+
 void printUserTypeMenu();
 bool pickUserType();
 
 void printActionMenu();
 void pickAction(bool isAdmin);
+
+void addMovie();
+void writeMovieToFile(const Movie& movie);
 
 int main() {
     const bool isAdmin = pickUserType();
@@ -72,6 +95,11 @@ void pickAction(bool isAdmin) {
 
         switch (choice) {
             case 1:
+                if (isAdmin) {
+                    addMovie();
+                } else {
+                    cout << "You don't have permission to add movies." << endl;
+                }
                 //TODO: Add movie function
                 break;
             case 2:
@@ -110,4 +138,58 @@ void pickAction(bool isAdmin) {
             return;
         }
     }
+}
+
+void addMovie() {
+    Movie movie{};
+
+    cout << "Enter movie title: ";
+    cin.ignore();
+    cin.getline(movie.title, MAX_TITLE_LENGTH);
+
+    short year;
+    cout << "Enter movie year: ";
+    if (!(cin >> year)) {
+        cout << "Year must be a number. Addition of movie was unsuccessful." << endl;
+        cin.clear();
+        cin.ignore(10000, '\n');
+        return;
+    }
+    if (year < 1800 || year > 2025) {
+        cout << "Invalid year. Addition of movie was unsuccessful." << endl;
+        return;
+    }
+    movie.year = year;
+
+    cout << "Enter movie genre: ";
+    cin.ignore();
+    cin.getline(movie.genre, MAX_GENRE_LENGTH);
+
+    cout << "Enter movie director: ";
+    cin.getline(movie.director, MAX_DIRECTOR_LENGTH);
+
+    short actorsCount;
+    cout << "Enter number of actors: ";
+    if (!(cin >> actorsCount)) {
+        cout << "Number of actors must be a number. Addition of movie was unsuccessful." << endl;
+        cin.clear();
+        cin.ignore(10000, '\n');
+        return;
+    }
+    if (actorsCount < 1 || actorsCount > MAX_ACTORS) {
+        cout << "Invalid number of actors. Addition of movie was unsuccessful." << endl;
+        return;
+    }
+
+    cin.ignore();
+    for (size_t i = 0; i < actorsCount; i++) {
+        cout << "Enter actor " << i + 1 << ": ";
+        cin.getline(movie.actors[i], MAX_ACTORS_LENGTH);
+    }
+
+    writeMovieToFile(movie);
+}
+
+void writeMovieToFile(const Movie& movie) {
+    //TODO: Write movie to file
 }
