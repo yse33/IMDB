@@ -47,6 +47,11 @@ void getAllMovies(MovieList& movieList);
 void printMovie(const Movie& movie);
 void printAllMovies();
 
+size_t myStrlen(const char* str);
+bool areStringsEqual(const char* str1, const char* str2);
+void searchMoviesByGenre();
+void printAllMoviesByGenre(const char* genre);
+
 int main() {
     const bool isAdmin = pickUserType();
 
@@ -109,10 +114,11 @@ void pickAction(const bool isAdmin) {
         cout << "Enter your choice: ";
         cin >> choice;
 
+        cout << endl;
+
         switch (choice) {
             case 1:
                 if (isAdmin) {
-                    cout << endl;
                     addMovie();
                 } else {
                     cout << "You don't have permission to add movies." << endl;
@@ -122,10 +128,9 @@ void pickAction(const bool isAdmin) {
                 //TODO: Search movie by title function
                 break;
             case 3:
-                //TODO: Search movie by genre function
+                searchMoviesByGenre();
                 break;
             case 4:
-                cout << endl;
                 printAllMovies();
                 break;
             case 5:
@@ -357,4 +362,64 @@ void printAllMovies() {
     }
 
     freeMovieListMemory(movieList);
+}
+
+size_t myStrlen(const char* str) {
+    if (str == nullptr) {
+        return 0;
+    }
+
+    size_t length = 0;
+    for (size_t i = 0; str[i] != '\0'; i++) {
+        length++;
+    }
+
+    return length;
+}
+
+bool areStringsEqual(const char* str1, const char* str2) {
+    if (str1 == nullptr || str2 == nullptr) {
+        return false;
+    }
+
+    const size_t len1 = myStrlen(str1);
+    if (len1 != myStrlen(str2)) {
+        return false;
+    }
+
+    for (size_t i = 0; i < len1; i++) {
+        if (str1[i] != str2[i]) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+void searchMoviesByGenre() {
+    cout << "Enter genre: ";
+    char* genre = new char[MAX_GENRE_LENGTH];
+    cin.ignore();
+    cin.getline(genre, MAX_GENRE_LENGTH);
+
+    printAllMoviesByGenre(genre);
+}
+
+void printAllMoviesByGenre(const char *genre) {
+    if (genre == nullptr) {
+        cout << "Invalid genre." << endl;
+        return;
+    }
+
+    MovieList movieList{};
+    getAllMovies(movieList);
+
+    for (size_t i = 0; i < movieList.size; i++) {
+        if (areStringsEqual(movieList.movies[i].genre, genre)) {
+            printMovie(movieList.movies[i]);
+            cout << endl;
+        }
+    }
+
+    delete [] genre;
 }
