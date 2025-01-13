@@ -22,18 +22,30 @@ struct Movie {
     char** actors{};
 };
 
+struct MovieList {
+    size_t size = 0;
+    size_t capacity = 8;
+    Movie* movies = new Movie[capacity];
+};
+
+void initMovieStrings(Movie& movie);
+void initMovieActors(Movie& movie);
+void freeMovieMemory(const Movie& movie);
+void resizeMovieList(MovieList& movieList);
+void freeMovieListMemory(const MovieList& movieList);
+
 void printUserTypeMenu();
 bool pickUserType();
 
 void printActionMenu();
 void pickAction(bool isAdmin);
 
-void initMovieStrings(Movie& movie);
-void initMovieActors(Movie& movie);
-void freeMovieMemory(const Movie& movie);
-
 void addMovie();
 void writeMovieToFile(const Movie& movie);
+
+void getAllMovies(MovieList& movieList);
+void printMovie(const Movie& movie);
+void printAllMovies();
 
 int main() {
     const bool isAdmin = pickUserType();
@@ -100,6 +112,7 @@ void pickAction(const bool isAdmin) {
         switch (choice) {
             case 1:
                 if (isAdmin) {
+                    cout << endl;
                     addMovie();
                 } else {
                     cout << "You don't have permission to add movies." << endl;
@@ -112,7 +125,8 @@ void pickAction(const bool isAdmin) {
                 //TODO: Search movie by genre function
                 break;
             case 4:
-                //TODO: View all movies function
+                cout << endl;
+                printAllMovies();
                 break;
             case 5:
                 //TODO: Redact movie function
@@ -258,4 +272,89 @@ void writeMovieToFile(const Movie& movie) {
     movieFile.close();
 
     freeMovieMemory(movie);
+}
+
+void resizeMovieList(MovieList& movieList) {
+    Movie* movies = new Movie[movieList.capacity * 2];
+    for (size_t i = 0; i < movieList.size; i++) {
+        movies[i] = movieList.movies[i];
+    }
+    delete [] movieList.movies;
+    movieList.movies = movies;
+}
+
+void freeMovieListMemory(const MovieList& movieList) {
+    for (size_t i = 0; i < movieList.size; i++) {
+        freeMovieMemory(movieList.movies[i]);
+    }
+
+    delete [] movieList.movies;
+}
+
+void getAllMovies(MovieList& movieList) {
+    ifstream movieFile(MOVIE_FILE_PATH);
+    if (!movieFile.is_open()) {
+        cout << "Failed to open file." << endl;
+        return;
+    }
+
+    while (movieFile.peek() != EOF) {
+        if (movieList.size == movieList.capacity) {
+            resizeMovieList(movieList);
+        }
+
+        Movie movie;
+        initMovieStrings(movie);
+
+        movieFile.getline(movie.title, MAX_TITLE_LENGTH);
+        movieFile >> movie.year;
+        movieFile.ignore();
+        movieFile.getline(movie.genre, MAX_GENRE_LENGTH);
+        movieFile.getline(movie.director, MAX_DIRECTOR_LENGTH);
+        movieFile >> movie.actorsCount;
+        movieFile.ignore();
+
+        initMovieActors(movie);
+        for (size_t i = 0; i < movie.actorsCount; i++) {
+            const char separator = i == movie.actorsCount - 1 ? '\n' : ';';
+            movieFile.getline(movie.actors[i], MAX_ACTORS_LENGTH, separator);
+        }
+
+        movieFile >> movie.rating;
+        movieFile.ignore();
+
+        movieList.movies[movieList.size] = movie;
+        movieList.size++;
+    }
+
+    movieFile.close();
+}
+
+void printMovie(const Movie& movie) {
+    cout << "Title: " << movie.title << endl;
+    cout << "Year: " << movie.year << endl;
+    cout << "Genre: " << movie.genre << endl;
+    cout << "Director: " << movie.director << endl;
+    cout << "Actors: ";
+    for (size_t i = 0; i < movie.actorsCount; i++) {
+        cout << movie.actors[i];
+        if (i != movie.actorsCount - 1) {
+            cout << ", ";
+        } else {
+            cout << endl;
+        }
+    }
+    cout << "Rating: " << movie.rating << endl;
+}
+
+void printAllMovies() {
+    MovieList movieList{};
+    getAllMovies(movieList);
+
+    for (size_t i = 0; i < movieList.size; i++) {
+        printMovie(movieList.movies[i]);
+        cout << endl;
+    }
+
+    freeMovieListMemory(movieList);
 }
