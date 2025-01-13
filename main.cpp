@@ -1,9 +1,9 @@
 #include <iostream>
+#include <fstream>
 
 using namespace std;
 
 const char* MOVIE_FILE_PATH = "movies.txt";
-const char* MOVIE_RATING_FILE_PATH = "ratings.txt";
 
 const size_t MAX_TITLE_LENGTH = 50;
 const size_t MAX_GENRE_LENGTH = 50;
@@ -14,13 +14,15 @@ const double DEFAULT_RATING = 5;
 
 struct Movie {
     double rating = DEFAULT_RATING;
-    short id = 0;
-    short year{};
-    char title[MAX_TITLE_LENGTH]{};
-    char genre[MAX_GENRE_LENGTH]{};
-    char director[MAX_DIRECTOR_LENGTH]{};
-    char actors[MAX_ACTORS][MAX_ACTORS_LENGTH]{};
+    short year = 0;
+    short actorsCount = 0;
+    char* title{};
+    char* genre{};
+    char* director{};
+    char** actors{};
 };
+
+int initMovieFile();
 
 void printUserTypeMenu();
 bool pickUserType();
@@ -28,13 +30,35 @@ bool pickUserType();
 void printActionMenu();
 void pickAction(bool isAdmin);
 
+void initMovieStrings(Movie& movie);
+void initMovieActors(Movie& movie);
+void freeMovieMemory(const Movie& movie);
+
 void addMovie();
-void writeMovieToFile(const Movie& movie);
+int updateMovieCount();
+void writeMovieToFile(const Movie& movie, short actorsCount);
 
 int main() {
+    if (initMovieFile() == -1) {
+        return -1;
+    }
+
     const bool isAdmin = pickUserType();
 
     pickAction(isAdmin);
+
+    return 0;
+}
+
+int initMovieFile() {
+    ofstream movieFile(MOVIE_FILE_PATH);
+    if (!movieFile.is_open()) {
+        cout << "Failed to open file." << endl;
+        return -1;
+    }
+
+    movieFile << 0 << endl;
+    movieFile.close();
 
     return 0;
 }
@@ -84,7 +108,7 @@ void printActionMenu() {
     cout << "9. Exit" << endl;
 }
 
-void pickAction(bool isAdmin) {
+void pickAction(const bool isAdmin) {
     int choice = 0;
 
     while (choice == 0) {
@@ -100,7 +124,6 @@ void pickAction(bool isAdmin) {
                 } else {
                     cout << "You don't have permission to add movies." << endl;
                 }
-                //TODO: Add movie function
                 break;
             case 2:
                 //TODO: Search movie by title function
@@ -140,14 +163,38 @@ void pickAction(bool isAdmin) {
     }
 }
 
+void initMovieStrings(Movie& movie) {
+    movie.title = new char[MAX_TITLE_LENGTH];
+    movie.genre = new char[MAX_GENRE_LENGTH];
+    movie.director = new char[MAX_DIRECTOR_LENGTH];
+}
+
+void initMovieActors(Movie& movie) {
+    movie.actors = new char*[movie.actorsCount];
+    for (size_t i = 0; i < movie.actorsCount; i++) {
+        movie.actors[i] = new char[MAX_ACTORS_LENGTH];
+    }
+}
+
+void freeMovieMemory(const Movie &movie) {
+    delete [] movie.title;
+    delete [] movie.genre;
+    delete [] movie.director;
+    for (size_t i = 0; i < movie.actorsCount; i++) {
+        delete [] movie.actors[i];
+    }
+    delete [] movie.actors;
+}
+
 void addMovie() {
     Movie movie{};
+    initMovieStrings(movie);
 
     cout << "Enter movie title: ";
     cin.ignore();
     cin.getline(movie.title, MAX_TITLE_LENGTH);
 
-    short year;
+    short year = 0;
     cout << "Enter movie year: ";
     if (!(cin >> year)) {
         cout << "Year must be a number. Addition of movie was unsuccessful." << endl;
@@ -168,7 +215,7 @@ void addMovie() {
     cout << "Enter movie director: ";
     cin.getline(movie.director, MAX_DIRECTOR_LENGTH);
 
-    short actorsCount;
+    short actorsCount = 0;
     cout << "Enter number of actors: ";
     if (!(cin >> actorsCount)) {
         cout << "Number of actors must be a number. Addition of movie was unsuccessful." << endl;
@@ -180,6 +227,9 @@ void addMovie() {
         cout << "Invalid number of actors. Addition of movie was unsuccessful." << endl;
         return;
     }
+    movie.actorsCount = actorsCount;
+
+    initMovieActors(movie);
 
     cin.ignore();
     for (size_t i = 0; i < actorsCount; i++) {
@@ -187,9 +237,65 @@ void addMovie() {
         cin.getline(movie.actors[i], MAX_ACTORS_LENGTH);
     }
 
-    writeMovieToFile(movie);
+    writeMovieToFile(movie, actorsCount);
 }
 
-void writeMovieToFile(const Movie& movie) {
-    //TODO: Write movie to file
+int updateMovieCount() {
+    ifstream movieFileRead(MOVIE_FILE_PATH);
+    if (!movieFileRead.is_open()) {
+        cout << "Failed to open file." << endl;
+        return -1;
+    }
+
+    int moviesCount = 0;
+    movieFileRead >> moviesCount;
+    movieFileRead.close();
+
+    moviesCount++;
+
+    ofstream movieFileWrite(MOVIE_FILE_PATH);
+    if (!movieFileWrite.is_open()) {
+        cout << "Failed to open file." << endl;
+        return -1;
+    }
+
+    movieFileWrite << moviesCount << endl;
+    movieFileWrite.close();
+
+    return 0;
+}
+
+void writeMovieToFile(const Movie& movie, const short actorsCount) {
+    if (updateMovieCount() == -1) {
+        freeMovieMemory(movie);
+        return;
+    }
+
+    ofstream movieFile(MOVIE_FILE_PATH, ios::app);
+
+    if (!movieFile.is_open()) {
+        cout << "Failed to open file." << endl;
+        freeMovieMemory(movie);
+        return;
+    }
+
+    movieFile << "Title: " << movie.title << endl;
+    movieFile << "Year: " << movie.year << endl;
+    movieFile << "Genre: " << movie.genre << endl;
+    movieFile << "Director: " << movie.director << endl;
+    movieFile << "Actors count: " << actorsCount << endl;
+    movieFile << "Actors: ";
+    for (size_t i = 0; i < actorsCount; i++) {
+        movieFile << movie.actors[i];
+        if (i != actorsCount - 1) {
+            movieFile << ";";
+        } else {
+            movieFile << endl;
+        }
+    }
+    movieFile << "Rating: " << movie.rating << endl;
+
+    movieFile.close();
+
+    freeMovieMemory(movie);
 }
