@@ -14,12 +14,14 @@ const double DEFAULT_RATING = 5;
 
 struct Movie {
     double rating = DEFAULT_RATING;
-    short year = 0;
-    short actorsCount = 0;
+    double* ratings{};
     char* title{};
     char* genre{};
     char* director{};
     char** actors{};
+    short actorsCount = 0;
+    short year = 0;
+    short ratingsCount = 0;
 };
 
 struct MovieList {
@@ -69,6 +71,10 @@ void editMovie(Movie& movie);
 void updateMovieFile(const MovieList& movieList);
 
 void pickMovieToDelete();
+
+void pickMovieToRate();
+void updateMovieAverageRating(Movie& movie);
+void rateMovie(Movie& movie);
 
 int main() {
     const bool isAdmin = pickUserType();
@@ -123,7 +129,7 @@ void printActionMenu() {
     cout << "2. Search movie by title" << endl;
     cout << "3. Search movie by genre" << endl;
     cout << "4. View all movies" << endl;
-    cout << "5. Redact movie" << endl;
+    cout << "5. Edit movie" << endl;
     cout << "6. Delete movie" << endl;
     cout << "7. Rate movie" << endl;
     cout << "8. Sort/Filter movie by rating" << endl;
@@ -180,7 +186,7 @@ void pickAction(const bool isAdmin) {
                 }
                 break;
             case 7:
-                //TODO: Rate movie function
+                pickMovieToRate();
                 break;
             case 8:
                 //TODO: Sort/Filter movie by rating function
@@ -303,6 +309,15 @@ void writeMovieInfoToFile(const Movie& movie, ofstream& movieFile) {
             movieFile << endl;
         }
     }
+    movieFile << movie.ratingsCount << endl;
+    for (size_t i = 0; i < movie.ratingsCount; i++) {
+        movieFile << movie.ratings[i];
+        if (i != movie.ratingsCount - 1) {
+            movieFile << " ";
+        } else {
+            movieFile << endl;
+        }
+    }
     movieFile << movie.rating << endl;
 }
 
@@ -365,6 +380,14 @@ void getAllMovies(MovieList& movieList) {
         for (size_t i = 0; i < movie.actorsCount; i++) {
             const char separator = i == movie.actorsCount - 1 ? '\n' : ';';
             movieFile.getline(movie.actors[i], MAX_ACTORS_LENGTH, separator);
+        }
+
+        movieFile >> movie.ratingsCount;
+        movieFile.ignore();
+
+        movie.ratings = new double[movie.ratingsCount];
+        for (size_t i = 0; i < movie.ratingsCount; i++) {
+            movieFile >> movie.ratings[i];
         }
 
         movieFile >> movie.rating;
@@ -774,4 +797,76 @@ void pickMovieToDelete() {
     updateMovieFile(movieList);
 
     freeMovieListMemory(movieList);
+}
+
+void pickMovieToRate() {
+    printAllMovies();
+
+    MovieList movieList{};
+    getAllMovies(movieList);
+
+    cout << "Enter the number of the movie you want to rate: ";
+    size_t movieNumber = 0;
+    if (!(cin >> movieNumber)) {
+        cout << "Movie number must be a number." << endl;
+        cin.clear();
+        cin.ignore(10000, '\n');
+
+        freeMovieListMemory(movieList);
+
+        return;
+    }
+
+    if (movieNumber < 1 || movieNumber > movieList.size) {
+        cout << "Invalid movie number." << endl;
+
+        freeMovieListMemory(movieList);
+
+        return;
+    }
+
+    cout << endl;
+
+    rateMovie(movieList.movies[movieNumber - 1]);
+
+    updateMovieFile(movieList);
+
+    freeMovieListMemory(movieList);
+}
+
+void updateMovieAverageRating(Movie& movie) {
+    double sum = 0;
+    for (size_t i = 0; i < movie.ratingsCount; i++) {
+        sum += movie.ratings[i];
+    }
+
+    movie.rating = sum / movie.ratingsCount;
+}
+
+void rateMovie(Movie& movie) {
+    double rating = 0;
+    cout << "Enter rating: ";
+
+    if (!(cin >> rating)) {
+        cout << "Rating must be a number." << endl;
+        cin.clear();
+        cin.ignore(10000, '\n');
+        return;
+    }
+
+    if (rating < 0 || rating > 10) {
+        cout << "Rating must be between 0 and 10." << endl;
+        return;
+    }
+
+    double* ratings = new double[movie.ratingsCount + 1];
+    for (size_t i = 0; i < movie.ratingsCount; i++) {
+        ratings[i] = movie.ratings[i];
+    }
+    ratings[movie.ratingsCount] = rating;
+
+    delete [] movie.ratings;
+    movie.ratings = ratings;
+    movie.ratingsCount++;
+    updateMovieAverageRating(movie);
 }
