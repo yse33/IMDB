@@ -68,6 +68,8 @@ void editMovieRating(Movie& movie);
 void editMovie(Movie& movie);
 void updateMovieFile(const MovieList& movieList);
 
+void pickMovieToDelete();
+
 int main() {
     const bool isAdmin = pickUserType();
 
@@ -157,7 +159,11 @@ void pickAction(const bool isAdmin) {
                 }
                 break;
             case 6:
-                //TODO: Delete movie function
+                if (isAdmin) {
+                    pickMovieToDelete();
+                } else {
+                    cout << "You don't have permission to delete movies." << endl;
+                }
                 break;
             case 7:
                 //TODO: Rate movie function
@@ -715,4 +721,43 @@ void updateMovieFile(const MovieList &movieList) {
     }
 
     movieFile.close();
+}
+
+void pickMovieToDelete() {
+    printAllMovies();
+
+    MovieList movieList{};
+    getAllMovies(movieList);
+
+    cout << "Enter the number of the movie you want to delete: ";
+    size_t movieNumber = 0;
+    if (!(cin >> movieNumber)) {
+        cout << "Movie number must be a number." << endl;
+        cin.clear();
+        cin.ignore(10000, '\n');
+
+        freeMovieListMemory(movieList);
+
+        return;
+    }
+
+    if (movieNumber < 1 || movieNumber > movieList.size) {
+        cout << "Invalid movie number." << endl;
+
+        freeMovieListMemory(movieList);
+
+        return;
+    }
+
+    cout << endl;
+
+    for (size_t i = movieNumber - 1; i < movieList.size - 1; i++) {
+        movieList.movies[i] = movieList.movies[i + 1];
+    }
+    freeMovieMemory(movieList.movies[movieList.size - 1]);
+    movieList.size--;
+
+    updateMovieFile(movieList);
+
+    freeMovieListMemory(movieList);
 }
