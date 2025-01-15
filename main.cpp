@@ -91,7 +91,14 @@ bool pickUserType() {
         printUserTypeMenu();
 
         cout << "Enter your choice: ";
-        cin >> choice;
+        if (!(cin >> choice)) {
+            choice = 0;
+            cout << "Choice must be a number." << endl;
+            cout << endl;
+            cin.clear();
+            cin.ignore(10000, '\n');
+            continue;
+        }
 
         switch (choice) {
             case 1:
@@ -130,7 +137,14 @@ void pickAction(const bool isAdmin) {
         printActionMenu();
 
         cout << "Enter your choice: ";
-        cin >> choice;
+        if (!(cin >> choice)) {
+            choice = 0;
+            cout << "Choice must be a number." << endl;
+            cout << endl;
+            cin.clear();
+            cin.ignore(10000, '\n');
+            continue;
+        }
 
         cout << endl;
 
