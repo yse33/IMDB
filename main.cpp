@@ -229,6 +229,7 @@ void freeMovieMemory(const Movie &movie) {
         delete [] movie.actors[i];
     }
     delete [] movie.actors;
+    delete [] movie.ratings;
 }
 
 void addMovie() {
