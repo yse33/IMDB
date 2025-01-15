@@ -361,6 +361,7 @@ void printAllMovies() {
     getAllMovies(movieList);
 
     for (size_t i = 0; i < movieList.size; i++) {
+        cout << "Movie " << i + 1 << ":" << endl;
         printMovie(movieList.movies[i]);
         cout << endl;
     }
@@ -421,11 +422,18 @@ void printAllMoviesByGenre(const char *genre) {
     MovieList movieList{};
     getAllMovies(movieList);
 
+    unsigned short foundMoviesCount = 0;
+
     for (size_t i = 0; i < movieList.size; i++) {
         if (areStringsEqual(movieList.movies[i].genre, genre)) {
+            cout << "Result " << ++foundMoviesCount << ":" << endl;
             printMovie(movieList.movies[i]);
             cout << endl;
         }
+    }
+
+    if (foundMoviesCount == 0) {
+        cout << "No movies found with genre \"" << genre << "\"." << endl;
     }
 }
 
@@ -478,10 +486,17 @@ void printAllMoviesByTitle(const char* title) {
     MovieList movieList{};
     getAllMovies(movieList);
 
+    unsigned short foundMoviesCount = 0;
+
     for (size_t i = 0; i < movieList.size; i++) {
         if (isSubstring(movieList.movies[i].title, title)) {
+            cout << "Result " << ++foundMoviesCount << ":" << endl;
             printMovie(movieList.movies[i]);
             cout << endl;
         }
+    }
+
+    if (foundMoviesCount == 0) {
+        cout << "No movies found with title containing \"" << title << "\"." << endl;
     }
 }
