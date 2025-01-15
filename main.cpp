@@ -76,6 +76,13 @@ void pickMovieToRate();
 void updateMovieAverageRating(Movie& movie);
 void rateMovie(Movie& movie);
 
+void printSortMenu();
+void pickSortOption();
+void swapMovies(Movie& movie1, Movie& movie2);
+bool compareStrings(const char* str1, const char* str2);
+void sortMoviesByTitle();
+void sortMoviesByRating();
+
 int main() {
     const bool isAdmin = pickUserType();
 
@@ -132,8 +139,9 @@ void printActionMenu() {
     cout << "5. Edit movie" << endl;
     cout << "6. Delete movie" << endl;
     cout << "7. Rate movie" << endl;
-    cout << "8. Sort/Filter movie by rating" << endl;
-    cout << "9. Exit" << endl;
+    cout << "8. Sort movies" << endl;
+    cout << "9. Filter movies by rating" << endl;
+    cout << "10. Exit" << endl;
 }
 
 void pickAction(const bool isAdmin) {
@@ -189,9 +197,12 @@ void pickAction(const bool isAdmin) {
                 pickMovieToRate();
                 break;
             case 8:
-                //TODO: Sort/Filter movie by rating function
+                pickSortOption();
                 break;
             case 9:
+                //TODO: Filter movies by rating function
+                break;
+            case 10:
                 break;
             default:
                 cout << "Invalid choice." << endl;
@@ -199,7 +210,7 @@ void pickAction(const bool isAdmin) {
 
         cout << endl;
 
-        if (choice != 9) {
+        if (choice != 10) {
             choice = 0;
         } else {
             cout << "Goodbye!" << endl;
@@ -870,4 +881,97 @@ void rateMovie(Movie& movie) {
     movie.ratings = ratings;
     movie.ratingsCount++;
     updateMovieAverageRating(movie);
+}
+
+void printSortMenu() {
+    cout << "How do you want to sort the movies?" << endl;
+    cout << "1. By title" << endl;
+    cout << "2. By rating" << endl;
+}
+
+void pickSortOption() {
+    printSortMenu();
+
+    int choice = 0;
+    cout << "Enter your choice: ";
+    if (!(cin >> choice)) {
+        cout << "Choice must be a number." << endl;
+        cin.clear();
+        cin.ignore(10000, '\n');
+        return;
+    }
+
+    if (choice < 1 || choice > 2) {
+        cout << "Invalid choice." << endl;
+        return;
+    }
+
+    cout << endl;
+
+    if (choice == 1) {
+        sortMoviesByTitle();
+    } else {
+        sortMoviesByRating();
+    }
+}
+
+void swapMovies(Movie& movie1, Movie& movie2) {
+    const Movie temp = movie1;
+    movie1 = movie2;
+    movie2 = temp;
+}
+
+bool compareStrings(const char* str1, const char* str2) {
+    const size_t len1 = myStrlen(str1), len2 = myStrlen(str2);
+
+    for (size_t i = 0; i < len1 && i < len2; i++) {
+        if (str1[i] < str2[i]) {
+            return false;
+        }
+        if (str1[i] > str2[i]) {
+            return true;
+        }
+    }
+
+    return len1 > len2;
+}
+
+void sortMoviesByTitle() {
+    MovieList movieList{};
+    getAllMovies(movieList);
+
+    for (size_t i = 0; i < movieList.size - 1; i++) {
+        for (size_t j = i + 1; j < movieList.size; j++) {
+            if (compareStrings(movieList.movies[i].title, movieList.movies[j].title)) {
+                swapMovies(movieList.movies[i], movieList.movies[j]);
+            }
+        }
+    }
+
+    cout << "Sorted movies by title:" << endl;
+    for (size_t i = 0; i < movieList.size; i++) {
+        cout << "Movie " << i + 1 << ":" << endl;
+        printMovie(movieList.movies[i]);
+        cout << endl;
+    }
+}
+
+void sortMoviesByRating() {
+    MovieList movieList{};
+    getAllMovies(movieList);
+
+    for (size_t i = 0; i < movieList.size - 1; i++) {
+        for (size_t j = i + 1; j < movieList.size; j++) {
+            if (movieList.movies[i].rating < movieList.movies[j].rating) {
+                swapMovies(movieList.movies[i], movieList.movies[j]);
+            }
+        }
+    }
+
+    cout << "Sorted movies by rating:" << endl;
+    for (size_t i = 0; i < movieList.size; i++) {
+        cout << "Movie " << i + 1 << ":" << endl;
+        printMovie(movieList.movies[i]);
+        cout << endl;
+    }
 }
