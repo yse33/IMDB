@@ -41,6 +41,7 @@ void printActionMenu();
 void pickAction(bool isAdmin);
 
 void addMovie();
+void writeMovieInfoToFile(const Movie& movie, ofstream& movieFile);
 void writeMovieToFile(const Movie& movie);
 
 void getAllMovies(MovieList& movieList);
@@ -55,6 +56,17 @@ void printAllMoviesByGenre(const char* genre);
 bool isSubstring(const char* str, const char* substr);
 void searchMoviesByTitle();
 void printAllMoviesByTitle(const char* title);
+
+void pickMovieToEdit();
+void printEditMenu();
+void editMovieTitle(Movie& movie);
+void editMovieYear(Movie& movie);
+void editMovieGenre(Movie& movie);
+void editMovieDirector(Movie& movie);
+void editMovieActors(Movie& movie);
+void editMovieRating(Movie& movie);
+void editMovie(Movie& movie);
+void updateMovieFile(const MovieList& movieList);
 
 int main() {
     const bool isAdmin = pickUserType();
@@ -138,7 +150,11 @@ void pickAction(const bool isAdmin) {
                 printAllMovies();
                 break;
             case 5:
-                //TODO: Redact movie function
+                if (isAdmin) {
+                    pickMovieToEdit();
+                } else {
+                    cout << "You don't have permission to edit movies." << endl;
+                }
                 break;
             case 6:
                 //TODO: Delete movie function
@@ -224,9 +240,8 @@ void addMovie() {
     cout << "Enter movie director: ";
     cin.getline(movie.director, MAX_DIRECTOR_LENGTH);
 
-    short actorsCount = 0;
     cout << "Enter number of actors: ";
-    if (!(cin >> actorsCount)) {
+    if (!(cin >> movie.actorsCount)) {
         cout << "Number of actors must be a number. Addition of movie was unsuccessful." << endl;
         cin.clear();
         cin.ignore(10000, '\n');
@@ -235,19 +250,18 @@ void addMovie() {
 
         return;
     }
-    if (actorsCount < 1) {
+    if (movie.actorsCount < 1) {
         cout << "Number of actors must be positive. Addition of movie was unsuccessful." << endl;
 
         freeMovieMemory(movie);
 
         return;
     }
-    movie.actorsCount = actorsCount;
 
     initMovieActors(movie);
 
     cin.ignore();
-    for (size_t i = 0; i < actorsCount; i++) {
+    for (size_t i = 0; i < movie.actorsCount; i++) {
         cout << "Enter actor " << i + 1 << ": ";
         cin.getline(movie.actors[i], MAX_ACTORS_LENGTH);
     }
@@ -255,14 +269,7 @@ void addMovie() {
     writeMovieToFile(movie);
 }
 
-void writeMovieToFile(const Movie& movie) {
-    ofstream movieFile(MOVIE_FILE_PATH, ios::app);
-    if (!movieFile.is_open()) {
-        cout << "Failed to open file." << endl;
-        freeMovieMemory(movie);
-        return;
-    }
-
+void writeMovieInfoToFile(const Movie& movie, ofstream& movieFile) {
     movieFile << movie.title << endl;
     movieFile << movie.year << endl;
     movieFile << movie.genre << endl;
@@ -277,6 +284,17 @@ void writeMovieToFile(const Movie& movie) {
         }
     }
     movieFile << movie.rating << endl;
+}
+
+void writeMovieToFile(const Movie& movie) {
+    ofstream movieFile(MOVIE_FILE_PATH, ios::app);
+    if (!movieFile.is_open()) {
+        cout << "Failed to open file." << endl;
+        freeMovieMemory(movie);
+        return;
+    }
+
+    writeMovieInfoToFile(movie, movieFile);
 
     movieFile.close();
 
@@ -499,4 +517,202 @@ void printAllMoviesByTitle(const char* title) {
     if (foundMoviesCount == 0) {
         cout << "No movies found with title containing \"" << title << "\"." << endl;
     }
+}
+
+void pickMovieToEdit() {
+    printAllMovies();
+
+    MovieList movieList{};
+    getAllMovies(movieList);
+
+    cout << "Enter the number of the movie you want to edit: ";
+    size_t movieNumber = 0;
+    if (!(cin >> movieNumber)) {
+        cout << "Movie number must be a number." << endl;
+        cin.clear();
+        cin.ignore(10000, '\n');
+
+        freeMovieListMemory(movieList);
+
+        return;
+    }
+
+    if (movieNumber < 1 || movieNumber > movieList.size) {
+        cout << "Invalid movie number." << endl;
+
+        freeMovieListMemory(movieList);
+
+        return;
+    }
+
+    cout << endl;
+    editMovie(movieList.movies[movieNumber - 1]);
+
+    updateMovieFile(movieList);
+
+    freeMovieListMemory(movieList);
+}
+
+void printEditMenu() {
+    cout << "What do you want to edit?" << endl;
+    cout << "1. Title" << endl;
+    cout << "2. Year" << endl;
+    cout << "3. Genre" << endl;
+    cout << "4. Director" << endl;
+    cout << "5. Actors" << endl;
+    cout << "6. Rating" << endl;
+    cout << "7. Done" << endl;
+}
+
+void editMovieTitle(Movie& movie) {
+    cout << "Enter new title: ";
+
+    delete [] movie.title;
+    movie.title = new char[MAX_TITLE_LENGTH];
+    cin.ignore();
+    cin.getline(movie.title, MAX_TITLE_LENGTH);
+}
+
+void editMovieYear(Movie& movie) {
+    int year = 0;
+
+    cout << "Enter new year: ";
+    if (!(cin >> year)) {
+        cout << "Year must be a number." << endl;
+        cin.clear();
+        cin.ignore(10000, '\n');
+        return;
+    }
+
+    if (year < 1800 || year > 2025) {
+        cout << "Invalid year." << endl;
+        return;
+    }
+
+    movie.year = year;
+}
+
+void editMovieGenre(Movie& movie) {
+    cout << "Enter new genre: ";
+
+    delete [] movie.genre;
+    movie.genre = new char[MAX_GENRE_LENGTH];
+    cin.ignore();
+    cin.getline(movie.genre, MAX_GENRE_LENGTH);
+}
+
+void editMovieDirector(Movie& movie) {
+    cout << "Enter new director: ";
+
+    delete [] movie.director;
+    movie.director = new char[MAX_DIRECTOR_LENGTH];
+    cin.ignore();
+    cin.getline(movie.director, MAX_DIRECTOR_LENGTH);
+}
+
+void editMovieActors(Movie& movie) {
+    cout << "Enter new number of actors: ";
+    if (!(cin >> movie.actorsCount)) {
+        cout << "Number of actors must be a number." << endl;
+        cin.clear();
+        cin.ignore(10000, '\n');
+        return;
+    }
+
+    for (size_t i = 0; i < movie.actorsCount; i++) {
+        delete [] movie.actors[i];
+    }
+    delete [] movie.actors;
+
+    movie.actors = new char*[movie.actorsCount];
+
+    cin.ignore();
+    for (size_t i = 0; i < movie.actorsCount; i++) {
+        movie.actors[i] = new char[MAX_ACTORS_LENGTH];
+        cout << "Enter actor " << i + 1 << ": ";
+        cin.getline(movie.actors[i], MAX_ACTORS_LENGTH);
+    }
+}
+
+void editMovieRating(Movie& movie) {
+    double rating = 0;
+
+    cout << "Enter new rating: ";
+    if (!(cin >> rating)) {
+        cout << "Rating must be a number." << endl;
+        cin.clear();
+        cin.ignore(10000, '\n');
+        return;
+    }
+
+    if (rating < 0 || rating > 10) {
+        cout << "Rating must be between 0 and 10." << endl;
+        return;
+    }
+
+    movie.rating = rating;
+}
+
+void editMovie(Movie& movie) {
+    int choice = 0;
+
+    while (choice == 0) {
+        cout << "Current movie information: " << endl;
+        printMovie(movie);
+        cout << endl;
+        printEditMenu();
+
+        cout << "Enter your choice: ";
+        cin >> choice;
+
+        cout << endl;
+
+        switch (choice) {
+            case 1:
+                editMovieTitle(movie);
+                break;
+            case 2:
+                editMovieYear(movie);
+                break;
+            case 3:
+                editMovieGenre(movie);
+                break;
+            case 4:
+                editMovieDirector(movie);
+                break;
+            case 5:
+                editMovieActors(movie);
+                break;
+            case 6:
+                editMovieRating(movie);
+                break;
+            case 7:
+                break;
+            default:
+                cout << "Invalid choice." << endl;
+        }
+
+        if (choice != 7) {
+            choice = 0;
+            cout << endl;
+        } else {
+            cout << "Movie editing complete." << endl;
+            return;
+        }
+    }
+}
+
+void updateMovieFile(const MovieList &movieList) {
+    ofstream movieFile(MOVIE_FILE_PATH);
+
+    if (!movieFile.is_open()) {
+        cout << "Failed to open file." << endl;
+        return;
+    }
+
+    for (size_t i = 0; i < movieList.size; i++) {
+        writeMovieInfoToFile(movieList.movies[i], movieFile);
+    }
+
+    movieFile.close();
 }
