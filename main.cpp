@@ -52,6 +52,10 @@ bool areStringsEqual(const char* str1, const char* str2);
 void searchMoviesByGenre();
 void printAllMoviesByGenre(const char* genre);
 
+bool isSubstring(const char* str, const char* substr);
+void searchMoviesByTitle();
+void printAllMoviesByTitle(const char* title);
+
 int main() {
     const bool isAdmin = pickUserType();
 
@@ -125,7 +129,7 @@ void pickAction(const bool isAdmin) {
                 }
                 break;
             case 2:
-                //TODO: Search movie by title function
+                searchMoviesByTitle();
                 break;
             case 3:
                 searchMoviesByGenre();
@@ -402,7 +406,10 @@ void searchMoviesByGenre() {
     cin.ignore();
     cin.getline(genre, MAX_GENRE_LENGTH);
 
+    cout << endl;
     printAllMoviesByGenre(genre);
+
+    delete [] genre;
 }
 
 void printAllMoviesByGenre(const char *genre) {
@@ -420,6 +427,61 @@ void printAllMoviesByGenre(const char *genre) {
             cout << endl;
         }
     }
+}
 
-    delete [] genre;
+bool isSubstring(const char* str, const char* substr) {
+    if (str == nullptr || substr == nullptr) {
+        return false;
+    }
+
+    const size_t len = myStrlen(str), subLen = myStrlen(substr);
+    if (subLen > len) {
+        return false;
+    }
+
+    for (size_t i = 0; i <= len - subLen; i++) {
+        bool isSubstring = true;
+        for (size_t j = 0; j < subLen; j++) {
+            if (str[i + j] != substr[j]) {
+                isSubstring = false;
+                break;
+            }
+        }
+
+        if (isSubstring) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void searchMoviesByTitle() {
+    cout << "Enter title: ";
+    char* title = new char[MAX_TITLE_LENGTH];
+    cin.ignore();
+    cin.getline(title, MAX_TITLE_LENGTH);
+
+    cout << endl;
+    printAllMoviesByTitle(title);
+
+    delete [] title;
+}
+
+
+void printAllMoviesByTitle(const char* title) {
+    if (title == nullptr) {
+        cout << "Invalid title." << endl;
+        return;
+    }
+
+    MovieList movieList{};
+    getAllMovies(movieList);
+
+    for (size_t i = 0; i < movieList.size; i++) {
+        if (isSubstring(movieList.movies[i].title, title)) {
+            printMovie(movieList.movies[i]);
+            cout << endl;
+        }
+    }
 }
