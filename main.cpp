@@ -83,6 +83,9 @@ bool compareStrings(const char* str1, const char* str2);
 void sortMoviesByTitle();
 void sortMoviesByRating();
 
+void filterMoviesByRating();
+void printAllMoviesByRating(double rating);
+
 int main() {
     const bool isAdmin = pickUserType();
 
@@ -200,7 +203,7 @@ void pickAction(const bool isAdmin) {
                 pickSortOption();
                 break;
             case 9:
-                //TODO: Filter movies by rating function
+                filterMoviesByRating();
                 break;
             case 10:
                 break;
@@ -954,6 +957,8 @@ void sortMoviesByTitle() {
         printMovie(movieList.movies[i]);
         cout << endl;
     }
+
+    freeMovieListMemory(movieList);
 }
 
 void sortMoviesByRating() {
@@ -974,4 +979,49 @@ void sortMoviesByRating() {
         printMovie(movieList.movies[i]);
         cout << endl;
     }
+
+    freeMovieListMemory(movieList);
+}
+
+void filterMoviesByRating() {
+    double rating = 0;
+
+    cout << "Enter rating: ";
+    if (!(cin >> rating)) {
+        cout << "Rating must be a number." << endl;
+        cin.clear();
+        cin.ignore(10000, '\n');
+        return;
+    }
+
+    if (rating < 0 || rating > 10) {
+        cout << "Rating must be between 0 and 10." << endl;
+        return;
+    }
+
+    cout << endl;
+    printAllMoviesByRating(rating);
+}
+
+void printAllMoviesByRating(const double rating) {
+    MovieList movieList{};
+    getAllMovies(movieList);
+
+    unsigned int foundMoviesCount = 0;
+    for (size_t i = 0; i < movieList.size; i++) {
+        if (movieList.movies[i].rating >= rating) {
+            if (foundMoviesCount == 0) {
+                cout << "Movies with rating greater than or equal to " << rating << ":" << endl;
+            }
+            cout << "Movie " << ++foundMoviesCount << ":" << endl;
+            printMovie(movieList.movies[i]);
+            cout << endl;
+        }
+    }
+
+    if (foundMoviesCount == 0) {
+        cout << "No movies found with rating greater than or equal to " << rating << "." << endl;
+    }
+
+    freeMovieListMemory(movieList);
 }
