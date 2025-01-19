@@ -30,6 +30,8 @@ struct MovieList {
     Movie* movies = new Movie[capacity];
 };
 
+void checkMovieFile();
+
 void initMovieStrings(Movie& movie);
 void initMovieActors(Movie& movie);
 void freeMovieMemory(const Movie& movie);
@@ -42,6 +44,8 @@ bool pickUserType();
 void printActionMenu();
 void pickAction(bool isAdmin);
 
+bool isStringEmpty(const char* str);
+bool areMovieStringsValid(const Movie& movie);
 void addMovie();
 void writeMovieInfoToFile(const Movie& movie, ofstream& movieFile);
 void writeMovieToFile(const Movie& movie);
@@ -87,11 +91,28 @@ void filterMoviesByRating();
 void printAllMoviesByRating(double rating);
 
 int main() {
+    checkMovieFile();
+
     const bool isAdmin = pickUserType();
 
     pickAction(isAdmin);
 
     return 0;
+}
+
+void checkMovieFile() {
+    ifstream movieFile(MOVIE_FILE_PATH);
+    if (!movieFile.is_open()) {
+        ofstream createMovieFile(MOVIE_FILE_PATH);
+        if (!createMovieFile.is_open()) {
+            cout << "Failed to create file." << endl;
+            return;
+        }
+
+        createMovieFile.close();
+    }
+
+    movieFile.close();
 }
 
 void printUserTypeMenu() {
@@ -246,6 +267,24 @@ void freeMovieMemory(const Movie &movie) {
     delete [] movie.ratings;
 }
 
+bool isStringEmpty(const char* str) {
+    return str == nullptr || str[0] == '\0';
+}
+
+bool areMovieStringsValid(const Movie& movie) {
+    if (isStringEmpty(movie.title) || isStringEmpty(movie.genre) || isStringEmpty(movie.director)) {
+        return false;
+    }
+
+    for (size_t i = 0; i < movie.actorsCount; i++) {
+        if (isStringEmpty(movie.actors[i])) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 void addMovie() {
     Movie movie{};
     initMovieStrings(movie);
@@ -305,6 +344,14 @@ void addMovie() {
     for (size_t i = 0; i < movie.actorsCount; i++) {
         cout << "Enter actor " << i + 1 << ": ";
         cin.getline(movie.actors[i], MAX_ACTORS_LENGTH);
+    }
+
+    if (!areMovieStringsValid(movie)) {
+        cout << "Empty string found. Addition of movie was unsuccessful." << endl;
+
+        freeMovieMemory(movie);
+
+        return;
     }
 
     writeMovieToFile(movie);
@@ -440,6 +487,10 @@ void printAllMovies() {
         cout << "Movie " << i + 1 << ":" << endl;
         printMovie(movieList.movies[i]);
         cout << endl;
+    }
+
+    if (movieList.size == 0) {
+        cout << "No movies found." << endl;
     }
 
     freeMovieListMemory(movieList);
